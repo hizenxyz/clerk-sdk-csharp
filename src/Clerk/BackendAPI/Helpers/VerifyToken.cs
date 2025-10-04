@@ -87,7 +87,7 @@ public static class VerifyToken
         if (options.AuthorizedParties != null)
         {
             var azpClaim = claims.FindFirst("azp");
-            if (azpClaim != null && !options.AuthorizedParties.Contains(azpClaim.Value))
+            if (azpClaim is not null && !IsAuthorizedPartyAllowed(azpClaim, options.AuthorizedParties))
                 throw new TokenVerificationException(TokenVerificationErrorReason.TOKEN_INVALID_AUTHORIZED_PARTIES);
         }
 
@@ -98,6 +98,27 @@ public static class VerifyToken
 
         claims = OrganizationClaimsProcessor.ProcessOrganizationClaims(claims);
         return claims;
+    }
+
+    static bool IsAuthorizedPartyAllowed(Claim azpClaim, IEnumerable<string> allowed)
+    {
+        var azp = azpClaim.Value;
+        foreach (var pattern in allowed)
+        {
+            if (pattern.StartsWith("*.", StringComparison.OrdinalIgnoreCase))
+            {
+                // wildcard match
+                var suffix = pattern[1..]; // remove the '*'
+                if (azp.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            else if (string.Equals(azp, pattern, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
