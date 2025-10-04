@@ -75,12 +75,41 @@ public class RequestState
         if (Status != AuthStatus.SignedIn || Claims == null)
             throw new InvalidOperationException("Cannot convert to auth object when not signed in.");
 
-        var tokenType = TokenTypeHelper.GetTokenType(Token);
+        var tokenType = TokenTypeHelper.GetTokenType(Token!);
         switch (tokenType)
         {
             case TokenType.SessionToken:
-                var versionClaim = Claims.FindFirst("v")?.Value;
-                if (versionClaim == "2")
+                var aerialVersionClaim = Claims.FindFirst("aerial-v");
+                var versionClaim = aerialVersionClaim is not null
+                    ? aerialVersionClaim.Value
+                    : Claims.FindFirst("v")?.Value;
+
+                if (versionClaim == "aerial-1")
+                {
+                    return new AerialAuthObject
+                    {
+                        AerialVersion = versionClaim,
+                        Aud = Claims.FindFirst("aud")?.Value,
+                        HasImage = Claims.FindFirst("has_image")?.Value == "true",
+                        ImageUrl = Claims.FindFirst("image_url")?.Value,
+                        Enabled2fa = Claims.FindFirst("enabled_2fa")?.Value == "true",
+                        Azp = Claims.FindFirst("azp")?.Value,
+                        Email = Claims.FindFirst("email")?.Value,
+                        Exp = int.Parse(Claims.FindFirst("exp")?.Value ?? "0"),
+                        Fva = Claims.FindAll("fva").Select(c => int.Parse(c.Value)).ToList(),
+                        Iat = int.Parse(Claims.FindFirst("iat")?.Value ?? "0"),
+                        Iss = Claims.FindFirst("iss")?.Value,
+                        Jti = Claims.FindFirst("jti")?.Value,
+                        Nbf = int.Parse(Claims.FindFirst("nbf")?.Value ?? "0"),
+                        Role = Claims.FindFirst("role")?.Value,
+                        Sid = Claims.FindFirst("sid")?.Value,
+                        Sub = Claims.FindFirst("sub")?.Value,
+                        V = int.Parse(versionClaim.Replace("aerial-", string.Empty))
+                    };
+
+                    throw new InvalidOperationException($"Unsupported aerial version: '{versionClaim}'");
+                }
+                else if (versionClaim == "2")
                 {
                     return new SessionAuthObjectV2
                     {

@@ -9,6 +9,15 @@ public abstract class AuthObject
 {
 }
 
+public class AerialAuthObject : SessionAuthObjectV2
+{
+    public string? AerialVersion { get; set; }
+    public string? Aud { get; set; }
+    public bool HasImage { get; set; }
+    public string? ImageUrl { get; set; }
+    public bool Enabled2fa { get; set; }
+}
+
 /// <summary>
 /// Session authentication object for version 2 tokens
 /// </summary>

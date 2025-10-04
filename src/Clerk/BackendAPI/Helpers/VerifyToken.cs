@@ -45,7 +45,10 @@ public static class VerifyToken
         else
             rsaKey = await GetRemoteJwtKeyAsync(token, options);
 
-        var tokenHandler = new JwtSecurityTokenHandler();
+        var tokenHandler = new JwtSecurityTokenHandler()
+        {
+            MapInboundClaims = false
+        };
 
         var validationParameters = new TokenValidationParameters
         {
